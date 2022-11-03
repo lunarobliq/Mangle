@@ -10,7 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+    	"os"
+    	"bufio"
 	"github.com/Binject/debug/pe"
 )
 
@@ -46,6 +47,7 @@ func options() *FlagOptions {
 	outFile := flag.String("O", "", "The new file name")
 	inputFile := flag.String("I", "", "Path to the orginal file")
 	CertCloner := flag.String("C", "", "Path to the file containing the certificate you want to clone")
+	RemoveStringsFile := flag.String("R", "", "Path to the file containing the strings to remove (will replace -M options with this file)")
 	GoStrip := flag.Bool("M", false, "Edit the PE file to strip out Go indicators")
 	size := flag.Int("S", 0, "How many MBs to increase the file by")
 	flag.Parse()
@@ -87,11 +89,41 @@ func main() {
 	}
 
 	if opt.GoStrip == true {
-		InputFileData = GoEditor(InputFileData)
+		if opt.RemoveStringsFile !=""{
+			InputFileData = GoEditorFile(InputFileData)	
+		}
+		else {
+			InputFileData = GoEditor(InputFileData)	
+		}
 	}
-
 	ioutil.WriteFile(opt.outFile, InputFileData, 0777)
 
+}
+
+func readLines(path string) ([]string, error) {
+    file, err := os.Open(path)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    var lines []string
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        lines = append(lines, scanner.Text())
+    }
+    return lines, scanner.Err()
+}
+
+func GoEditorFile(buff []byte) []byte{
+    stringnum := readLines(RemoveStringsFile)
+    mydata := string(buff) 
+	
+    for i := range stringnum {
+	val := RandStringBytes(len(stringnum[i]))
+	mydata = strings.ReplaceAll(string(mydata), stringnum[i], val)
+    }
+    return []byte(mydata)
 }
 
 func GoEditor(buff []byte) []byte {
