@@ -16,6 +16,7 @@ import (
 )
 
 var hex = "abcef12345678890"
+var RemoveStrFile = ""
 
 func GenerateNumer(min, max int) string {
 	rand.Seed(time.Now().UnixNano())
@@ -39,6 +40,7 @@ type FlagOptions struct {
 	outFile    string
 	inputFile  string
 	CertCloner string
+	RemoveStringsFile string
 	GoStrip    bool
 	size       int
 }
@@ -47,11 +49,11 @@ func options() *FlagOptions {
 	outFile := flag.String("O", "", "The new file name")
 	inputFile := flag.String("I", "", "Path to the orginal file")
 	CertCloner := flag.String("C", "", "Path to the file containing the certificate you want to clone")
-	RemoveStringsFile := flag.String("R", "", "Path to the file containing the strings to remove (will replace -M options with this file)")
+	RemoveStringsFile := flag.String("R", "", "Path to the file containing the strings to remove")
 	GoStrip := flag.Bool("M", false, "Edit the PE file to strip out Go indicators")
 	size := flag.Int("S", 0, "How many MBs to increase the file by")
 	flag.Parse()
-	return &FlagOptions{outFile: *outFile, inputFile: *inputFile, CertCloner: *CertCloner, GoStrip: *GoStrip, size: *size}
+	return &FlagOptions{outFile: *outFile, inputFile: *inputFile, CertCloner: *CertCloner, GoStrip: *GoStrip, size: *size,RemoveStringsFile: *RemoveStringsFile}
 }
 
 func main() {
@@ -89,10 +91,10 @@ func main() {
 	}
 
 	if opt.GoStrip == true {
-		if opt.RemoveStringsFile !=""{
+		if opt.RemoveStringsFile != "" {
+			RemoveStrFile=opt.RemoveStringsFile
 			InputFileData = GoEditorFile(InputFileData)	
-		}
-		else {
+		} else {
 			InputFileData = GoEditor(InputFileData)	
 		}
 	}
@@ -116,7 +118,12 @@ func readLines(path string) ([]string, error) {
 }
 
 func GoEditorFile(buff []byte) []byte{
-    stringnum := readLines(RemoveStringsFile)
+
+    stringnum, err := readLines(string(RemoveStrFile))
+
+    if err != nil {
+     log.Fatalf("Error: %s",err)
+    }
     mydata := string(buff) 
 	
     for i := range stringnum {
