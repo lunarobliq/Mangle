@@ -53,7 +53,7 @@ Usage of ./Mangle:
   -M    
   	Edit the PE file to strip out Go indicators
 	-R
-	  WITH -M argument passed this is a optional arguement to the Path to the strings.txt file to use to replace list of defined strings in inputfile (-I) (1 per line)
+	  With the -M argument passed this is a optional arguement to the Path to the strings.txt file to use to replace list of defined strings in inputfile (-I) (1 per line)
   -O string
         The new file name
   -S int
